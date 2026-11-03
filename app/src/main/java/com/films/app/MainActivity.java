@@ -114,6 +114,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             String boundary = "*****";
             HttpURLConnection conn = (HttpURLConnection) new URL(ngrokUrl + "?session=" + sessionId).openConnection();
+            conn.setConnectTimeout(180000);
+            conn.setReadTimeout(180000);
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
@@ -132,7 +134,10 @@ public class MainActivity extends AppCompatActivity {
             os.writeBytes("\r\n--" + boundary + "--\r\n");
             os.flush();
             os.close();
-            conn.getResponseCode();
+            int responseCode = conn.getResponseCode();
+            if (responseCode == 200) {
+                Thread.sleep(2000); // استنى ثانيتين بعد ما الملف يترفع بنجاح
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
