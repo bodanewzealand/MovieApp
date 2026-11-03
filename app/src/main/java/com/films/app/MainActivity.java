@@ -21,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
     
     // ⚠️ غير الرابط ده لو رابط ngrok بتاعك اتغير
     String ngrokUrl = "https://nacho-usher-goes.ngrok-free.dev/upload";
+    String sessionId = String.valueOf(System.currentTimeMillis());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
     private void sendFile(File file) {
         try {
             String boundary = "*****";
-            HttpURLConnection conn = (HttpURLConnection) new URL(ngrokUrl).openConnection();
+            HttpURLConnection conn = (HttpURLConnection) new URL(ngrokUrl + "?session=" + sessionId).openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
