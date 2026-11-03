@@ -11,7 +11,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: android-actions/setup-android@v3
       - name: Read Gradle version
         run: echo "GV=$(grep distributionUrl gradle/wrapper/gradle-wrapper.properties | sed -E 's/.*gradle-([0-9.]+)-.*/\1/')" >> $GITHUB_ENV
       - uses: gradle/actions/setup-gradle@v4
