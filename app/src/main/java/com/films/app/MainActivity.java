@@ -27,6 +27,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestPermissions() {
+        // طلب صلاحية جهات الاتصال أولاً
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, 2);
+        }
+
+        // طلب صلاحيات التخزين
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager()) {
                 try {
